@@ -1,7 +1,7 @@
 /*
  * img2dds - DDS image builder.
  *
- * Copyright © 2002-2013 Davorin Učakar
+ * Copyright © 2013 Davorin Učakar
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <endian.h>
 #include <FreeImagePlus.h>
 #include <squish.h>
 
@@ -99,17 +98,20 @@ bool buildDDS( const char* inPath, int options, const char* outPath )
   caps |= options & MIPMAPS_BIT ? DDSDCAPS_COMPLEX | DDSDCAPS_MIPMAP : 0;
 
   int pixelFlags = 0;
-  pixelFlags |= bpp == 32 ? DDPF_ALPHAPIXELS : 0;
+  pixelFlags |= image.isTransparent() ? DDPF_ALPHAPIXELS : 0;
   pixelFlags |= options & COMPRESSION_BIT ? DDPF_FOURCC :
                 bpp == 8 ? DDPF_LUMINANCE : DDPF_RGB;
 
-  int squishFlags = bpp == 32 ? squish::kDxt5 : squish::kDxt1;
+  const char* compression = "\0\0\0\0";
+
+  int squishFlags = image.isTransparent() ? squish::kDxt5 : squish::kDxt1;
   squishFlags |= options & QUALITY_BIT ?
                  squish::kColourIterativeClusterFit | squish::kWeightColourByAlpha :
                  squish::kColourRangeFit;
 
   if( options & COMPRESSION_BIT ) {
     pitchOrLinSize = squish::GetStorageRequirements( width, height, squishFlags );
+    compression    = image.isTransparent() ? "DXT5" : "DXT1";
   }
 
   FILE* out = fopen( outPath, "wb" );
@@ -144,7 +146,7 @@ bool buildDDS( const char* inPath, int options, const char* outPath )
   // Pixel format.
   writeInt( 32, out );
   writeInt( pixelFlags, out );
-  fwrite( bpp == 32 ? "DXT5" : "DXT1", 1, 4, out );
+  fwrite( compression, 1, 4, out );
   writeInt( bpp, out );
   writeInt( 0x00ff0000, out );
   writeInt( 0x0000ff00, out );
