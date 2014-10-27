@@ -517,7 +517,7 @@ ImageData ImageBuilder::loadImage(const char* file)
         image.pixels[pos + 2] = char(fgetc(f));
         image.pixels[pos + 3] = char(bpp == 32 ? fgetc(f) : 255);
 
-        if (image.pixels[i + 3] != char(255)) {
+        if (image.pixels[pos + 3] != char(255)) {
           image.flags |= ImageData::ALPHA_BIT;
         }
       }
