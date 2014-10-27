@@ -39,6 +39,9 @@ struct ImageData
   /// Alpha flag.
   static const int ALPHA_BIT = 0x01;
 
+  /// Normal map bit.
+  static const int NORMAL_BIT = 0x02;
+
   int   width;  ///< Width.
   int   height; ///< Height.
   int   flags;  ///< Flags.
@@ -140,18 +143,6 @@ public:
   /**
    * Generate a DDS form a given image and optionally compress it and create mipmaps.
    *
-   * Mipmap generation and S3 texture compression can be controlled via `options` parameter.
-   * - `ALPHA_BIT` enables alpha channel and writes texture as RGBA instead as RGB.
-   * - `MIPMAPS_BIT` enables generation of mipmaps.
-   * - `COMPRESSION_BIT` enables S3 texture compression; DXT1 is used for images without an alpha
-   *   channel and DXT5 for images with an alpha channel. Texture compression is enabled only if
-   *   `OZ_NONFREE` is enabled on ozEngine build.
-   * - `CUBE_MAP_BIT` tells that image array contains exactly 6 images and a cube map should be
-   *   generates instead of array texture.
-   *
-   * Input images should use 32-bit bundary for line alignment and should be in RGB or RGBA format
-   * (OpenGL GL_RGB or GL_RGBA).
-   *
    * An array texture is created if more than one image face is given. The array texture must be
    * 32 BPP. If an array of exactly 6 faces is given and `CUBE_MAP_BIT` option is set a cube map is
    * generated. Cube map faces must be given in the following order: +x, -x, +y, -y, +z, -z.
@@ -166,25 +157,6 @@ public:
    * @param destFile output file.
    */
   static bool createDDS(const ImageData* faces, int nFaces, int options, const char* destFile);
-
-  /**
-   * Convert a given image to DDS format, similar to `buildDDS()`.
-   *
-   * Freeimage library is used for reading a file, so most of image file formats are supported.
-   * If the input file is a valid DDS, it is only copied. Transparency is detected when loading so
-   * `ALPHA_BIT` option has no effect for this function.
-   *
-   * This function only supports single-layer DDS images, volume and cube map textures are not
-   * supported.
-   *
-   * @param file input image file.
-   * @param options bit-mask to control mipmap generation and compression.
-   * @param destPath output file or directory (in the latter case output file has the same base
-   *        name as the input file but "dds" extension).
-   *
-   * @sa `buildDDS()`
-   */
-  static bool convertToDDS(const char* file, int options, const char* destPath);
 
   /**
    * Initialise underlaying FreeImage library.

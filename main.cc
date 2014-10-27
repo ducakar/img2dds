@@ -24,9 +24,12 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <getopt.h>
+#include <string>
 
 using namespace oz;
+using namespace std;
 
 static void printUsage()
 {
@@ -36,10 +39,10 @@ static void printUsage()
     "  -h  Flip horizontally\n"
     "  -m  Generate mipmaps\n"
     "  -n  Set normal map flag (DDPF_NORMAL)\n"
-    "  -N  Set normal map flag if the image looks like a RGB = XYZ normal map,\n"
+    "  -N  Set normal map flag if the image looks like a RGB = XYZ normal map\n"
     "      disable -n, -s and -S options otherwise\n"
-    "  -s  Do RGB -> GGGR swizzle (for DXT5nm)\n"
-    "  -S  Do RGB -> BGBR swizzle (for DXT5nm+z)\n"
+    "  -s  Do RGB -> GGGR swizzle (for DXT5nm), ignored for MBM normal maps\n"
+    "  -S  Do RGB -> BGBR swizzle (for DXT5nm+z), ignored for MBM normal maps\n"
     "  -v  Flip vertically\n\n");
 }
 
@@ -98,7 +101,15 @@ int main(int argc, char** argv)
 
   ImageData image = ImageBuilder::loadImage(argv[optind]);
 
-  if (detectNormals) {
+  if (image.isEmpty()) {
+    printf("Failed to open image '%s'.\n", argv[optind]);
+  }
+
+  if (image.flags & ImageData::NORMAL_BIT) {
+    ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
+    ddsOptions &= ~(ImageBuilder::YYYX_BIT | ImageBuilder::ZYZX_BIT);
+  }
+  else if (detectNormals) {
     if (image.isNormalMap()) {
       ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
     }
@@ -108,9 +119,24 @@ int main(int argc, char** argv)
     }
   }
 
-  const char* destPath = nArgs == 1 ? "." : argv[optind + 1];
+  string destFile;
 
-  if (!ImageBuilder::createDDS(&image, 1, ddsOptions, destPath)) {
+  if (nArgs == 2) {
+    destFile = argv[optind + 1];
+  }
+  else {
+    const char* dot = strrchr(argv[optind], '.');
+
+    if (dot == nullptr) {
+      printf("File extensfion missing: '%s'.\n", argv[optind]);
+      return false;
+    }
+    else {
+      destFile = string(argv[optind], size_t(dot - argv[optind])) + ".dds";
+    }
+  }
+
+  if (!ImageBuilder::createDDS(&image, 1, ddsOptions, destFile.c_str())) {
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

@@ -29,8 +29,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <cstdio>
-#include <cstring>
-#include <string>
 #include <FreeImage.h>
 #include <squish.h>
 
@@ -72,7 +70,18 @@ static const unsigned D3D10_RESOURCE_DIMENSION_TEXTURE2D = 3;
 
 static inline int index1(int v)
 {
-  return v == 0 ? -1 : 31 - __builtin_clz(v);
+  return v == 0 ? -1 : 31 - __builtin_clz(unsigned(v));
+}
+
+static inline int readInt(FILE* f)
+{
+  int i;
+  fread(&i, sizeof(i), 1, f);
+
+#if defined( __BIG_ENDIAN__ ) || ( defined( __BYTE_ORDER__ ) && __BYTE_ORDER__ == 4321 )
+  i = __builtin_bswap32(i);
+#endif
+  return i;
 }
 
 static inline void writeInt(int i, FILE* f)
@@ -86,12 +95,12 @@ static inline void writeInt(int i, FILE* f)
 
 static inline void writeChars(const char* bytes, int count, FILE* f)
 {
-  fwrite(bytes, count, 1, f);
+  fwrite(bytes, 1, size_t(count), f);
 }
 
 static void printError(FREE_IMAGE_FORMAT fif, const char* message)
 {
-  printf("FreeImage(%s): %s", FreeImage_GetFormatFromFIF(fif), message);
+  printf("FreeImage(%s): %s\n", FreeImage_GetFormatFromFIF(fif), message);
 }
 
 static FIBITMAP* createBitmap(const ImageData& image)
@@ -113,7 +122,7 @@ static FIBITMAP* createBitmap(const ImageData& image)
   }
 
   if (dib == nullptr) {
-    printf("FreeImage_ConvertFromRawBits failed to build image.");
+    printf("FreeImage_ConvertFromRawBits failed to build image.\n");
   }
 
   FreeImage_SetTransparent(dib, image.flags & ImageData::ALPHA_BIT);
@@ -126,7 +135,6 @@ static FIBITMAP* loadBitmap(const char* file)
   FIBITMAP*         dib    = FreeImage_Load(format < 0 ? FIF_TARGA : format, file);
 
   if (dib == nullptr) {
-    printf("Failed to read '%s'.", file);
     return nullptr;
   }
 
@@ -155,12 +163,12 @@ static FIBITMAP* loadBitmap(const char* file)
   return dib;
 }
 
-static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* destFile)
+static bool buildDDS(const ImageData* faces, int nFaces, int options, const char* destFile)
 {
   assert(nFaces > 0);
 
-  int width      = int(FreeImage_GetWidth(faces[0]));
-  int height     = int(FreeImage_GetHeight(faces[0]));
+  int width      = faces[0].width;
+  int height     = faces[0].height;
 
   bool isCubeMap = options & ImageBuilder::CUBE_MAP_BIT;
   bool isNormal  = options & ImageBuilder::NORMAL_MAP_BIT;
@@ -170,20 +178,18 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
   bool doFlop    = options & ImageBuilder::FLOP_BIT;
   bool doYYYX    = options & ImageBuilder::YYYX_BIT;
   bool doZYZX    = options & ImageBuilder::ZYZX_BIT;
-  bool hasAlpha  = FreeImage_IsTransparent(faces[0]) || doYYYX || doZYZX;
+  bool hasAlpha  = (faces[0].flags & ImageData::ALPHA_BIT) || doYYYX || doZYZX;
   bool isArray   = !isCubeMap && nFaces > 1;
 
   for (int i = 1; i < nFaces; ++i) {
-    if (int(FreeImage_GetWidth(faces[i])) != width ||
-        int(FreeImage_GetHeight(faces[i])) != height)
-    {
-      printf("All faces must have the same dimensions.");
+    if (faces[i].width != width || faces[i].height != height) {
+      printf("All faces must have the same dimensions.\n");
       return false;
     }
   }
 
   if (isCubeMap && nFaces != 6) {
-    printf("Cube map requires exactly 6 faces.");
+    printf("Cube map requires exactly 6 faces.\n");
     return false;
   }
 
@@ -212,7 +218,6 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
   const char* fourCC = isArray ? "DX10" : "\0\0\0\0";
   int dx10Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-#ifdef OZ_NONFREE
   int squishFlags = squish::kColourIterativeClusterFit | squish::kWeightColourByAlpha;
   squishFlags    |= hasAlpha ? squish::kDxt5 : squish::kDxt1;
 
@@ -221,12 +226,11 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
     dx10Format     = hasAlpha ? DXGI_FORMAT_BC3_UNORM : DXGI_FORMAT_BC1_UNORM;
     fourCC         = isArray ? "DX10" : hasAlpha ? "DXT5" : "DXT1";
   }
-#endif
 
-  FILE* f = fopen(destFile, "w");
+  FILE* f = fopen(destFile, "wb");
 
   if (f == nullptr) {
-    printf("Failed to write '%s'.", destFile);
+    printf("Failed to open for writing '%s'.\n", destFile);
     return false;
   }
 
@@ -270,7 +274,7 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
     writeInt(0x00ff0000, f);
     writeInt(0x0000ff00, f);
     writeInt(0x000000ff, f);
-    writeInt(0xff000000, f);
+    writeInt(int(0xff000000), f);
   }
 
   writeInt(caps, f);
@@ -287,8 +291,10 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
     writeInt(0, f);
   }
 
+  vector<char> buffer;
+
   for (int i = 0; i < nFaces; ++i) {
-    FIBITMAP* face = faces[i];
+    FIBITMAP* face = createBitmap(faces[i]);
 
     if (doFlip) {
       FreeImage_FlipVertical(face);
@@ -330,7 +336,7 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
     }
 
     if (targetBPP == 24) {
-      face = FreeImage_ConvertTo24Bits(faces[i]);
+      face = FreeImage_ConvertTo24Bits(face);
     }
 
     int levelWidth  = width;
@@ -343,12 +349,12 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
       }
 
       if (compress) {
-#ifdef OZ_NONFREE
-        ubyte* pixels = FreeImage_GetBits(level);
-        int    s3Size = squish::GetStorageRequirements(levelWidth, levelHeight, squishFlags);
+        BYTE* pixels = FreeImage_GetBits(level);
+        int   s3Size = squish::GetStorageRequirements(levelWidth, levelHeight, squishFlags);
 
-        squish::CompressImage(pixels, levelWidth, levelHeight, os.forward(s3Size), squishFlags);
-#endif
+        buffer.resize(size_t(s3Size));
+        squish::CompressImage(pixels, levelWidth, levelHeight, &buffer[0], squishFlags);
+        writeChars(&buffer[0], s3Size, f);
       }
       else {
         const char* pixels = reinterpret_cast<const char*>(FreeImage_GetBits(level));
@@ -368,12 +374,19 @@ static bool buildDDS(FIBITMAP** faces, int nFaces, int options, const char* dest
       }
     }
 
-    if (face != faces[i]) {
-      FreeImage_Unload(face);
-    }
+    FreeImage_Unload(face);
   }
 
   fclose(f);
+
+  printf("%s\nformat: %s, dimensions: %dx%d, mipmaps: %d, normal map: %s.\n",
+         destFile,
+         compress ? fourCC : targetBPP == 32 ? "RGBA" : "RGB",
+         width,
+         height,
+         nMipmaps - 1,
+         isNormal ? "yes" : "no");
+
   return true;
 }
 
@@ -467,7 +480,7 @@ bool ImageData::isNormalMap() const
   average[2] /= float(width * height);
   average[3] /= float(width * height);
 
-  average[2] -= 0.5;
+  average[2] -= 0.5f;
   average[3] -= 1.0f;
 
   return average[0]*average[0] + average[1]*average[1] + average[2]*average[2] < 0.1f;
@@ -479,83 +492,70 @@ ImageData ImageBuilder::loadImage(const char* file)
 
   FIBITMAP* dib = loadBitmap(file);
   if (dib == nullptr) {
-    return image;
+    FILE* f = fopen(file, "rb");
+    if (f == nullptr || readInt(f) != 0x50534B03) {
+      return image;
+    }
+
+    int width  = readInt(f);
+    int height = readInt(f);
+    int type   = readInt(f);
+    int bpp    = readInt(f);
+
+    image = ImageData(width, height);
+
+    if (type != 0) {
+      image.flags |= ImageData::NORMAL_BIT;
+    }
+
+    for (int i = height - 1; i >= 0; --i) {
+      for (int j = 0; j < width; ++j) {
+        int pos = (i * width + j) * 4;
+
+        image.pixels[pos + 0] = char(fgetc(f));
+        image.pixels[pos + 1] = char(fgetc(f));
+        image.pixels[pos + 2] = char(fgetc(f));
+        image.pixels[pos + 3] = char(bpp == 32 ? fgetc(f) : 255);
+
+        if (image.pixels[i + 3] != char(255)) {
+          image.flags |= ImageData::ALPHA_BIT;
+        }
+      }
+    }
+
+    fclose(f);
   }
+  else {
+    image = ImageData(int(FreeImage_GetWidth(dib)), int(FreeImage_GetHeight(dib)));
 
-  image = ImageData(int(FreeImage_GetWidth(dib)), int(FreeImage_GetHeight(dib)));
+    // Copy and convert BGRA -> RGBA.
+    int   size   = image.width * image.height * 4;
+    BYTE* pixels = FreeImage_GetBits(dib);
 
-  // Copy and convert BGRA -> RGBA.
-  int   size   = image.width * image.height * 4;
-  BYTE* pixels = FreeImage_GetBits(dib);
+    for (int i = 0; i < size; i += 4) {
+      image.pixels[i + 0] = char(pixels[i + 2]);
+      image.pixels[i + 1] = char(pixels[i + 1]);
+      image.pixels[i + 2] = char(pixels[i + 0]);
+      image.pixels[i + 3] = char(pixels[i + 3]);
+    }
 
-  for (int i = 0; i < size; i += 4) {
-    image.pixels[i + 0] = char(pixels[i + 2]);
-    image.pixels[i + 1] = char(pixels[i + 1]);
-    image.pixels[i + 2] = char(pixels[i + 0]);
-    image.pixels[i + 3] = char(pixels[i + 3]);
+    if (FreeImage_IsTransparent(dib)) {
+      image.flags |= ImageData::ALPHA_BIT;
+    }
+
+    FreeImage_Unload(dib);
   }
-
-  FreeImage_Unload(dib);
   return image;
 }
 
 bool ImageBuilder::createDDS(const ImageData* faces, int nFaces, int options, const char* destFile)
 {
   if (nFaces < 1) {
-    printf("At least one face must be given.");
+    printf("At least one face must be given.\n");
     return false;
   }
 
-  bool       success = false;
-  FIBITMAP** dibs    = new FIBITMAP*[nFaces];
-
-  for (int i = 0; i < nFaces; ++i) {
-    dibs[i] = createBitmap(faces[i]);
-
-    if (dibs[i] == nullptr) {
-      nFaces = i;
-      goto cleanUp;
-    }
-  }
-
-  success = buildDDS(dibs, nFaces, options, destFile);
-
-cleanUp:
-  for (int i = 0; i < nFaces; ++i) {
-    FreeImage_Unload(dibs[i]);
-  }
-  delete[] dibs;
-
-  return success;
-}
-
-bool ImageBuilder::convertToDDS(const char* file, int options, const char* destPath)
-{
-  string destFile;
-
-  if (destPath != nullptr) {
-    destFile = destPath;
-  }
-  else {
-    const char* dot = strrchr(file, '.');
-
-    if (dot == nullptr) {
-      printf("File extensfion missing: %s", file);
-      return false;
-    }
-    else {
-      destFile = std::string(file, dot) + ".dds";
-    }
-  }
-
-  FIBITMAP* dib = loadBitmap(file);
-  if (dib == nullptr) {
-    return false;
-  }
-  bool success = buildDDS(&dib, 1, options, destFile.c_str());
-
-  FreeImage_Unload(dib);
-  return success;
+  return buildDDS(faces, nFaces, options, destFile);
 }
 
 void ImageBuilder::init()
