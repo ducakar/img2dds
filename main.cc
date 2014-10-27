@@ -1,7 +1,7 @@
 /*
  * img2dds - DDS image builder.
  *
- * Copyright © 2002-2013 Davorin Učakar
+ * Copyright © 2002-2014 Davorin Učakar
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -20,51 +20,98 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "img2dds.hh"
+#include "ImageBuilder.hh"
 
 #include <cstdio>
 #include <cstdlib>
 #include <getopt.h>
 
-static void usage()
+using namespace oz;
+
+static void printUsage()
 {
   printf(
-    "Usage: img2dds [-c] [-m] [-q] <inputImage> <outputDDS>\n"
-    "\t-c\tUse S3 texture compression\n"
-    "\t-m\tGenerate mipmaps\n"
-    "\t-q\tUse top quality for texture compression and mipmap scaling.\n"
-  );
-  exit( 1 );
+    "Usage: ozDDS [options] <inputImage> [<outputDirOrFile>]\n"
+    "  -c  Use S3 texture compression (DXT1 or DXT5 if the image has transparent pixels)\n"
+    "  -h  Flip horizontally\n"
+    "  -m  Generate mipmaps\n"
+    "  -n  Set normal map flag (DDPF_NORMAL)\n"
+    "  -N  Set normal map flag if the image looks like a RGB = XYZ normal map,\n"
+    "      disable -n, -s and -S options otherwise\n"
+    "  -s  Do RGB -> GGGR swizzle (for DXT5nm)\n"
+    "  -S  Do RGB -> BGBR swizzle (for DXT5nm+z)\n"
+    "  -v  Flip vertically\n\n");
 }
 
-int main( int argc, char** argv )
+int main(int argc, char** argv)
 {
-  int ddsOptions = 0;
+  int  ddsOptions    = 0;
+  bool detectNormals = false;
 
   int opt;
-  while( ( opt = getopt( argc, argv, "cmq" ) ) >= 0 ) {
-    switch( opt ) {
+  while ((opt = getopt(argc, argv, "chmnNsSv")) >= 0) {
+    switch (opt) {
       case 'c': {
-        ddsOptions |= COMPRESSION_BIT;
+        ddsOptions |= ImageBuilder::COMPRESSION_BIT;
+        break;
+      }
+      case 'h': {
+        ddsOptions |= ImageBuilder::FLOP_BIT;
         break;
       }
       case 'm': {
-        ddsOptions |= MIPMAPS_BIT;
+        ddsOptions |= ImageBuilder::MIPMAPS_BIT;
         break;
       }
-      case 'q': {
-        ddsOptions |= QUALITY_BIT;
+      case 'n': {
+        ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
+        break;
+      }
+      case 'N': {
+        detectNormals = true;
+        break;
+      }
+      case 's': {
+        ddsOptions |= ImageBuilder::YYYX_BIT;
+        break;
+      }
+      case 'S': {
+        ddsOptions |= ImageBuilder::ZYZX_BIT;
+        break;
+      }
+      case 'v': {
+        ddsOptions |= ImageBuilder::FLIP_BIT;
         break;
       }
       default: {
-        usage();
+        printUsage();
+        return EXIT_FAILURE;
       }
     }
   }
 
-  if( argc - optind != 2 ) {
-    usage();
+  int nArgs = argc - optind;
+  if (nArgs < 1 || nArgs > 2) {
+    printUsage();
+    return EXIT_FAILURE;
   }
 
-  return !buildDDS( argv[optind], ddsOptions, argv[optind + 1] );
+  ImageData image = ImageBuilder::loadImage(argv[optind]);
+
+  if (detectNormals) {
+    if (image.isNormalMap()) {
+      ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
+    }
+    else {
+      ddsOptions &= ~ImageBuilder::NORMAL_MAP_BIT;
+      ddsOptions &= ~(ImageBuilder::YYYX_BIT | ImageBuilder::ZYZX_BIT);
+    }
+  }
+
+  const char* destPath = nArgs == 1 ? "." : argv[optind + 1];
+
+  if (!ImageBuilder::createDDS(&image, 1, ddsOptions, destPath)) {
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
