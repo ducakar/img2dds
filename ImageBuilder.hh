@@ -28,9 +28,6 @@
 
 #pragma once
 
-namespace oz
-{
-
 /**
  * %Image pixel data with basic metadata (dimensions and transparency).
  */
@@ -173,5 +170,3 @@ public:
   static void destroy();
 
 };
-
-}

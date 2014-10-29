@@ -28,7 +28,6 @@
 #include <getopt.h>
 #include <string>
 
-using namespace oz;
 using namespace std;
 
 static void printUsage()
@@ -103,6 +102,7 @@ int main(int argc, char** argv)
 
   if (image.isEmpty()) {
     printf("Failed to open image '%s'.\n", argv[optind]);
+    return EXIT_FAILURE;
   }
 
   if (image.flags & ImageData::NORMAL_BIT) {

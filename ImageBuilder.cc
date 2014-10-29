@@ -34,9 +34,6 @@
 
 using namespace std;
 
-namespace oz
-{
-
 static const unsigned DDSD_CAPS                          = 0x00000001;
 static const unsigned DDSD_HEIGHT                        = 0x00000002;
 static const unsigned DDSD_WIDTH                         = 0x00000004;
@@ -567,6 +564,4 @@ void ImageBuilder::init()
 void ImageBuilder::destroy()
 {
   FreeImage_DeInitialise();
-}
-
 }

@@ -10,4 +10,7 @@ find_library(SQUISH_LIBRARY NAMES squish)
 add_executable(img2dds main.cc ImageBuilder.hh ImageBuilder.cc)
 target_link_libraries(img2dds ${FREEIMAGE_LIBRARY} ${SQUISH_LIBRARY})
 
+add_custom_target(imgs2dds SOURCES dds.py)
+
 install(TARGETS img2dds RUNTIME DESTINATION bin)
+install(FILES dds.py DESTINATION bin)
