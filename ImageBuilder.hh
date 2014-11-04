@@ -140,9 +140,9 @@ public:
   /**
    * Generate a DDS form a given image and optionally compress it and create mipmaps.
    *
-   * An array texture is created if more than one image face is given. The array texture must be
-   * 32 BPP. If an array of exactly 6 faces is given and `CUBE_MAP_BIT` option is set a cube map is
-   * generated. Cube map faces must be given in the following order: +x, -x, +y, -y, +z, -z.
+   * An array texture is created if more than one image face is given. If an array of exactly 6
+   * faces is given and `CUBE_MAP_BIT` option is set a cube map is generated. Cube map faces must
+   * be given in the following order: +x, -x, +y, -y, +z, -z.
    *
    * @note
    * The highest possible quality settings are used for compression and mipmap scaling, so this

@@ -67,7 +67,7 @@ static const unsigned D3D10_RESOURCE_DIMENSION_TEXTURE2D = 3;
 
 static inline int index1(int v)
 {
-  return v == 0 ? -1 : 31 - __builtin_clz(unsigned(v));
+  return int(sizeof(int)) * 8 - 1 - __builtin_clz(unsigned(v));
 }
 
 static inline int readInt(FILE* f)

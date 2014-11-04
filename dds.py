@@ -1,11 +1,23 @@
-#!/bin/env python
+#!/usr/bin/python
 
-# The following regex patterens must match the beginning of a texture path to work.
+# Usage:
+#
+#   ./dds.py /path/to/GameData
+#
+#  or just
+#
+#   ./dds.py
+#
+# in case this is located inside KSP directory.
+
+# The following regex patterens must match the beginning of a texture path (after `GameData/` to
+# work.
 
 # Excluded texture patterns. These textures will be left intact.
 EXCLUDE = [
   'BoulderCo/',
   'CommunityResourcePack/',
+  'NavyFish/Plugins/PluginData/',
   'RCSBuildAid/Textures/iconAppLauncher\.png$',
   'SCANsat/Icons/',
   'TextureReplacer/EnvMap/',
@@ -31,6 +43,7 @@ MODEL = [
   'KSO/RPM/KSO_Laptop_1/KSOS_Laptop_emis\.',
   'KSO/RPM/KSO_Laptop_1/KSOS_Laptop_norm_NRM\.',
   'Lionhead_Aerospace_Inc/',
+  'Part Revamp Extras/',
   'ProceduralFairings/',
   'Space Factory Ind/',
   'Squad/SPP/',
@@ -43,8 +56,8 @@ NOT_MODEL = [
   '.*/Flags/.*',
   '.*/Icons/.*',
   'ASET_Props/MFDs/',
-  'HOME2/Props/(HOMEMFD|Neptune|VZOR)',
-  'Space Factory Ind/PPTS/JSI/'
+  'HOME2/Props/.*\.png'
+  'Space Factory Ind/.*/JSI/.*\.png'
 ]
 
 ####################################################################################################
