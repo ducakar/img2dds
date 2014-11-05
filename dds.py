@@ -57,7 +57,8 @@ NOT_MODEL = [
   '.*/Icons/.*',
   'ASET_Props/MFDs/',
   'HOME2/Props/.*\.png'
-  'Space Factory Ind/.*/JSI/.*\.png'
+  'Space Factory Ind/.*/JSI/.*\.png',
+  'TextureReplacer/Default/(HUD|IVA)NavBall'
 ]
 
 ####################################################################################################
