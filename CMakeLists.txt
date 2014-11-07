@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(img2dds)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wconversion")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -msse3 -mfpmath=sse")
 
 find_library(FREEIMAGE_LIBRARY NAMES freeimage FreeImage)
 find_library(SQUISH_LIBRARY NAMES squish)

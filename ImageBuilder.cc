@@ -58,6 +58,7 @@ static const unsigned DDPF_ALPHAPIXELS                   = 0x00000001;
 static const unsigned DDPF_FOURCC                        = 0x00000004;
 static const unsigned DDPF_RGB                           = 0x00000040;
 static const unsigned DDPF_NORMAL                        = 0x80000000;
+static const unsigned DDPF_READABLE                      = 0x08000000;
 
 static const unsigned DXGI_FORMAT_R8G8B8A8_UNORM         = 28;
 static const unsigned DXGI_FORMAT_BC1_UNORM              = 71;
@@ -167,16 +168,17 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
   int width      = faces[0].width;
   int height     = faces[0].height;
 
-  bool isCubeMap = options & ImageBuilder::CUBE_MAP_BIT;
-  bool isNormal  = options & ImageBuilder::NORMAL_MAP_BIT;
-  bool doMipmaps = options & ImageBuilder::MIPMAPS_BIT;
-  bool compress  = options & ImageBuilder::COMPRESSION_BIT;
-  bool doFlip    = options & ImageBuilder::FLIP_BIT;
-  bool doFlop    = options & ImageBuilder::FLOP_BIT;
-  bool doYYYX    = options & ImageBuilder::YYYX_BIT;
-  bool doZYZX    = options & ImageBuilder::ZYZX_BIT;
-  bool hasAlpha  = (faces[0].flags & ImageData::ALPHA_BIT) || doYYYX || doZYZX;
-  bool isArray   = !isCubeMap && nFaces > 1;
+  bool isCubeMap  = options & ImageBuilder::CUBE_MAP_BIT;
+  bool isNormal   = options & ImageBuilder::NORMAL_MAP_BIT;
+  bool doMipmaps  = options & ImageBuilder::MIPMAPS_BIT;
+  bool compress   = options & ImageBuilder::COMPRESSION_BIT;
+  bool doFlip     = options & ImageBuilder::FLIP_BIT;
+  bool doFlop     = options & ImageBuilder::FLOP_BIT;
+  bool doYYYX     = options & ImageBuilder::YYYX_BIT;
+  bool doZYZX     = options & ImageBuilder::ZYZX_BIT;
+  bool isReadable = options & ImageBuilder::READABLE_BIT;
+  bool hasAlpha   = (faces[0].flags & ImageData::ALPHA_BIT) || doYYYX || doZYZX;
+  bool isArray    = !isCubeMap && nFaces > 1;
 
   for (int i = 1; i < nFaces; ++i) {
     if (faces[i].width != width || faces[i].height != height) {
@@ -210,6 +212,7 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
   int pixelFlags = 0;
   pixelFlags |= hasAlpha ? DDPF_ALPHAPIXELS : 0;
   pixelFlags |= compress ? DDPF_FOURCC : DDPF_RGB;
+  pixelFlags |= isReadable ? DDPF_READABLE : 0;
   pixelFlags |= isNormal ? DDPF_NORMAL : 0;
 
   const char* fourCC = isArray ? "DX10" : "\0\0\0\0";
@@ -376,13 +379,14 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
 
   fclose(f);
 
-  printf("%s\nformat: %s, dimensions: %dx%d, mipmaps: %d, normal map: %s.\n",
+  printf("%s\nformat: %s, dimensions: %dx%d, mipmaps: %d, normal map: %s, readable: %s.\n",
          destFile,
          compress ? fourCC : targetBPP == 32 ? "RGBA" : "RGB",
          width,
          height,
          nMipmaps - 1,
-         isNormal ? "yes" : "no");
+         isNormal ? "yes" : "no",
+         isReadable ? "yes" : "no");
 
   return true;
 }

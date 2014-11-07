@@ -40,6 +40,7 @@ static void printUsage()
     "  -n  Set normal map flag (DDPF_NORMAL)\n"
     "  -N  Set normal map flag if the image looks like a RGB = XYZ normal map\n"
     "      disable -n, -s and -S options otherwise\n"
+    "  -r  Set readable flag for DDSLoader\n"
     "  -s  Do RGB -> GGGR swizzle (for DXT5nm), ignored for MBM normal maps\n"
     "  -S  Do RGB -> BGBR swizzle (for DXT5nm+z), ignored for MBM normal maps\n"
     "  -v  Flip vertically\n\n");
@@ -51,7 +52,7 @@ int main(int argc, char** argv)
   bool detectNormals = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "chmnNsSv")) >= 0) {
+  while ((opt = getopt(argc, argv, "chmnNrsSv")) >= 0) {
     switch (opt) {
       case 'c': {
         ddsOptions |= ImageBuilder::COMPRESSION_BIT;
@@ -71,6 +72,10 @@ int main(int argc, char** argv)
       }
       case 'N': {
         detectNormals = true;
+        break;
+      }
+      case 'r': {
+        ddsOptions |= ImageBuilder::READABLE_BIT;
         break;
       }
       case 's': {
