@@ -15,11 +15,15 @@
 
 # Excluded texture patterns. These textures will be left intact.
 EXCLUDE = [
-#  'CommunityResourcePack/',
+  'BoulderCo/',
+  'CommunityResourcePack/',
+  'CustomBiomes/PluginData/CustomBiomes/',
   'NavyFish/Plugins/PluginData/',
   'RCSBuildAid/Textures/iconAppLauncher\.png$',
   'RealChute/Plugins/PluginData/RC_Icon\.png$',
+  'RealSolarSystem/Plugins/PluginData/',
   'SCANsat/Icons/',
+  'TextureReplacer/EnvMap/',
   'TriggerTech/.*/(Textures|ToolbarIcons)/'
 ]
 
@@ -46,6 +50,7 @@ MODEL = [
   'Lionhead_Aerospace_Inc/',
   'Part Revamp Extras/',
   'ProceduralFairings/',
+  'RetroFuture/',
   'Space Factory Ind/',
   'Squad/SPP/',
   'TextureReplacer/',
@@ -67,7 +72,6 @@ NOT_MODEL = [
 # Keep those textures loaded in RAM (some plugins need to acces image data).
 KEEP_READABLE = [
   'BoulderCo/',
-  'CommunityResourcePack/',
   'TextureReplacer/EnvMap/'
 ]
 

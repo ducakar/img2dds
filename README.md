@@ -12,7 +12,7 @@ all textures inside `GameData/` to DDS format.
 
 ### Usage ###
 
-Double-click `dds.py` or run in from console (type `./dds.py` on Linux) and wait until it finishes.
+Double-click `dds.py` or run it from console (type `./dds.py` on Linux) and wait until it finishes.
 
 **Warning: original textures are deleted after conversion.**
 
