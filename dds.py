@@ -50,6 +50,7 @@ MODEL = [
   'Lionhead_Aerospace_Inc/',
   'Part Revamp Extras/',
   'ProceduralFairings/',
+  'Regolith/Assets/',
   'RetroFuture/',
   'Space Factory Ind/',
   'Squad/SPP/',
@@ -72,7 +73,8 @@ NOT_MODEL = [
 # Keep those textures loaded in RAM (some plugins need to acces image data).
 KEEP_READABLE = [
   'BoulderCo/',
-  'TextureReplacer/EnvMap/'
+  'TextureReplacer/EnvMap/',
+  'WarpPlugin/PlanetResourceData/'
 ]
 
 ####################################################################################################

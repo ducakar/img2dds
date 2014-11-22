@@ -384,7 +384,7 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
          compress ? fourCC : targetBPP == 32 ? "RGBA" : "RGB",
          width,
          height,
-         nMipmaps - 1,
+         nMipmaps,
          isNormal ? "yes" : "no",
          isReadable ? "yes" : "no");
 
