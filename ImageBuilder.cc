@@ -29,8 +29,10 @@
 #include <algorithm>
 #include <assert.h>
 #include <cstdio>
+#include <cstring>
 #include <FreeImage.h>
 #include <squish.h>
+#include <vector>
 
 using namespace std;
 
@@ -547,6 +549,64 @@ ImageData ImageBuilder::loadImage(const char* file)
     FreeImage_Unload(dib);
   }
   return image;
+}
+
+bool ImageBuilder::printInfo(const char* file)
+{
+  FILE* f = fopen(file, "rb");
+  if (f == nullptr) {
+    return false;
+  }
+
+  // Implementation is based on specifications from
+  // http://msdn.microsoft.com/en-us/library/windows/desktop/bb943991%28v=vs.85%29.aspx.
+  char magic[4];
+  fread(magic, 4, 1, f);
+
+  if (memcmp(magic, "DDS ", 4) != 0) {
+    return false;
+  }
+
+  readInt(f);
+
+  int flags  = readInt(f);
+  int height = readInt(f);
+  int width  = readInt(f);
+
+  readInt(f);
+  readInt(f);
+
+  int nMipmaps = readInt(f);
+
+  if (!(unsigned(flags) & DDSD_MIPMAPCOUNT)) {
+    nMipmaps = 1;
+  }
+
+  fseek(f, 4 + 76, SEEK_SET);
+
+  int pixelFlags = readInt(f);
+
+  char formatFourCC[5] = {};
+  fread(formatFourCC, 4, 1, f);
+
+  int bpp = readInt(f);
+
+  readInt(f);
+  readInt(f);
+  readInt(f);
+  readInt(f);
+  readInt(f);
+
+  printf("%s\nformat: %s, dimensions: %dx%d, mipmaps: %d, normal map: %s, readable: %s.\n",
+         file,
+         unsigned(pixelFlags) & DDPF_FOURCC ? formatFourCC : bpp == 32 ? "RGBA" : "RGB",
+         width,
+         height,
+         nMipmaps,
+         unsigned(pixelFlags) & DDPF_NORMAL ? "yes" : "no",
+         unsigned(pixelFlags) & DDPF_READABLE ? "yes" : "no");
+
+  return true;
 }
 
 bool ImageBuilder::createDDS(const ImageData* faces, int nFaces, int options, const char* destFile)

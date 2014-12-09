@@ -15,7 +15,6 @@
 
 # Excluded texture patterns. These textures will be left intact.
 EXCLUDE = [
-  'BoulderCo/',
   'CommunityResourcePack/',
   'CustomBiomes/PluginData/CustomBiomes/',
   'NavyFish/Plugins/PluginData/',
@@ -40,6 +39,7 @@ MODEL = [
   'ASET/'
   'ASET_Props/',
   'BoulderCo/',
+  'BoxSat alpha/',
   'FASA/',
   'JSI/RasterPropMonitor/Library/Components/MFD40x20v2/',
   'KAS/Textures/',
@@ -64,10 +64,12 @@ NOT_MODEL = [
   '.*/Flags/.*',
   '.*/Icons/.*',
   'ASET_Props/MFDs/',
+  'AxialAerospace/Props/.*\.png',
   'B9_Aerospace/Props/B9_MFD/images/',
   'HOME2/Props/.*\.png'
   'Space Factory Ind/.*/JSI/.*\.png',
-  'TextureReplacer/Default/(HUD|IVA)NavBall'
+  'TextureReplacer/Default/(HUD|IVA)NavBall',
+  'TextureReplacer/Plugins',
 ]
 
 # Keep those textures loaded in RAM (some plugins need to acces image data).
@@ -89,6 +91,7 @@ IMAGE         = re.compile('.*\.(png|jpg|tga|mbm)$')
 PREFIX        = re.compile('.*GameData/')
 SYSTEM        = 'linux64' if sys.maxsize > 2**32 else 'linux32'
 SYSTEM        = 'win32' if sys.platform == 'win32' else SYSTEM
+SYSTEM        = 'osx64' if sys.platform == 'OSX64' else SYSTEM
 IMG2DDS       = './img2dds/' + SYSTEM + '/img2dds'
 IMG2DDS       = 'img2dds\win32\img2dds.exe' if SYSTEM == 'win32' else IMG2DDS
 DIR           = sys.argv[1] if len(sys.argv) == 2 else './GameData'

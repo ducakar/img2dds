@@ -36,6 +36,7 @@ static void printUsage()
     "Usage: ozDDS [options] <inputImage> [<outputDirOrFile>]\n"
     "  -c  Use S3 texture compression (DXT1 or DXT5 if the image has transparent pixels)\n"
     "  -h  Flip horizontally\n"
+    "  -i  Print information about a DDS image, do not convert\n"
     "  -m  Generate mipmaps\n"
     "  -n  Set normal map flag (DDPF_NORMAL)\n"
     "  -N  Set normal map flag if the image looks like a RGB = XYZ normal map\n"
@@ -50,9 +51,10 @@ int main(int argc, char** argv)
 {
   int  ddsOptions    = 0;
   bool detectNormals = false;
+  bool printInfo     = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "chmnNrsSv")) >= 0) {
+  while ((opt = getopt(argc, argv, "chimnNrsSv")) >= 0) {
     switch (opt) {
       case 'c': {
         ddsOptions |= ImageBuilder::COMPRESSION_BIT;
@@ -60,6 +62,10 @@ int main(int argc, char** argv)
       }
       case 'h': {
         ddsOptions |= ImageBuilder::FLOP_BIT;
+        break;
+      }
+      case 'i': {
+        printInfo = true;
         break;
       }
       case 'm': {
@@ -101,6 +107,16 @@ int main(int argc, char** argv)
   if (nArgs < 1 || nArgs > 2) {
     printUsage();
     return EXIT_FAILURE;
+  }
+
+  if (printInfo) {
+    if (ImageBuilder::printInfo(argv[optind])) {
+      return EXIT_SUCCESS;
+    }
+    else {
+      printf("Not a DDS file '%s'.\n", argv[optind]);
+      return EXIT_FAILURE;
+    }
   }
 
   ImageData image = ImageBuilder::loadImage(argv[optind]);

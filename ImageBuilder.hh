@@ -136,6 +136,11 @@ public:
   ImageBuilder() = delete;
 
   /**
+   * Print information about a DDS image.
+   */
+  static bool printInfo(const char* file);
+
+  /**
    * Load an image.
    */
   static ImageData loadImage(const char* file);
