@@ -381,14 +381,14 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
 
   fclose(f);
 
-  printf("%s\nformat: %s, dimensions: %dx%d, mipmaps: %d, normal map: %s, readable: %s.\n",
+  printf("%s\n%s  %4dx%-4d  %2d mipmaps%s%s\n",
          destFile,
-         compress ? fourCC : targetBPP == 32 ? "RGBA" : "RGB",
+         compress ? fourCC : targetBPP == 32 ? "RGBA" : "RGB ",
          width,
          height,
          nMipmaps,
-         isNormal ? "yes" : "no",
-         isReadable ? "yes" : "no");
+         isNormal ? "  NORMAL_MAP" : "",
+         isReadable ? "  READABLE" : "");
 
   return true;
 }
@@ -468,7 +468,7 @@ bool ImageData::isNormalMap() const
 
     float cSq = c[0]*c[0] + c[1]*c[1] + c[2]*c[2];
 
-    if (abs(1.0f - cSq) > 1.0f || c[3] < 0.9f) {
+    if (abs(1.0f - cSq) > 0.8f || c[3] < 0.9f) {
       return false;
     }
 
@@ -484,7 +484,6 @@ bool ImageData::isNormalMap() const
   average[3] /= float(width * height);
 
   average[2] -= 0.5f;
-  average[3] -= 1.0f;
 
   return average[0]*average[0] + average[1]*average[1] + average[2]*average[2] < 0.1f;
 }
@@ -597,14 +596,14 @@ bool ImageBuilder::printInfo(const char* file)
   readInt(f);
   readInt(f);
 
-  printf("%s\nformat: %s, dimensions: %dx%d, mipmaps: %d, normal map: %s, readable: %s.\n",
+  printf("%s\n%s  %4dx%-4d  %2d mipmaps%s%s\n",
          file,
-         unsigned(pixelFlags) & DDPF_FOURCC ? formatFourCC : bpp == 32 ? "RGBA" : "RGB",
+         unsigned(pixelFlags) & DDPF_FOURCC ? formatFourCC : bpp == 32 ? "RGBA" : "RGB ",
          width,
          height,
          nMipmaps,
-         unsigned(pixelFlags) & DDPF_NORMAL ? "yes" : "no",
-         unsigned(pixelFlags) & DDPF_READABLE ? "yes" : "no");
+         unsigned(pixelFlags) & DDPF_NORMAL ? "  NORMAL_MAP" : "",
+         unsigned(pixelFlags) & DDPF_READABLE ? "  READABLE" : "");
 
   return true;
 }
