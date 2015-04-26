@@ -125,9 +125,6 @@ public:
   /// Perform RGB(A) -> BGBR swizzle (for DXT5nm+z normal map compression).
   static const int ZYZX_BIT = 0x80;
 
-  /// Set "keep readable" bit for DDSLoader.
-  static const int READABLE_BIT = 0x100;
-
 public:
 
   /**
@@ -161,7 +158,8 @@ public:
    * @param options bit-mask to control mipmap generation, compression and cube map.
    * @param destFile output file.
    */
-  static bool createDDS(const ImageData* faces, int nFaces, int options, const char* destFile);
+  static bool createDDS(const ImageData* faces, int nFaces, int options, double scale,
+                        const char* destFile);
 
   /**
    * Initialise underlaying FreeImage library.

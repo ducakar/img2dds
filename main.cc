@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <getopt.h>
+#include <sstream>
 #include <string>
 
 using namespace std;
@@ -34,54 +35,59 @@ static void printUsage()
 {
   printf(
     "Usage: ozDDS [options] <inputImage> [<outputDirOrFile>]\n"
-    "  -c  Use S3 texture compression (DXT1 or DXT5 if the image has transparent pixels)\n"
-    "  -h  Flip horizontally\n"
-    "  -i  Print information about a DDS image, do not convert\n"
-    "  -m  Generate mipmaps\n"
-    "  -n  Set normal map flag (DDPF_NORMAL)\n"
-    "  -N  Set normal map flag if the image looks like a RGB = XYZ normal map\n"
-    "      disable -n, -s and -S options otherwise\n"
-    "  -r  Set readable flag for DDSLoader\n"
-    "  -s  Do RGB -> GGGR swizzle (for DXT5nm), ignored for MBM normal maps\n"
-    "  -S  Do RGB -> BGBR swizzle (for DXT5nm+z), ignored for MBM normal maps\n"
-    "  -v  Flip vertically\n\n");
+    "       ozDDS [-I | -N] <inputImage>\n"
+    "\n"
+    "  -I          Print information about a DDS image and exit\n"
+    "  -N          Detect normal map (RGB = XYZ) and exit (zero exit code if it is)\n"
+    "  -h          Flip horizontally\n"
+    "  -v          Flip vertically\n\n"
+    "  -r <scale>  Resize to the give scale\n"
+    "  -c          Compress as DXT1 (opaque) or DXT5 (transparent)\n"
+    "  -m          Generate mipmaps\n"
+    "  -n          Set normal map flag (DDPF_NORMAL)\n"
+    "  -s          Do RGB -> GGGR swizzle (for DXT5nm), ignored for MBM normal maps\n"
+    "  -S          Do RGB -> BGBR swizzle (for DXT5nm+z), ignored for MBM normal maps\n"
+    "\n");
 }
 
 int main(int argc, char** argv)
 {
-  int  ddsOptions    = 0;
-  bool detectNormals = false;
-  bool printInfo     = false;
+  int    ddsOptions    = 0;
+  double scale         = 1.0;
+  bool   detectNormals = false;
+  bool   printInfo     = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "chimnNrsSv")) >= 0) {
+  while ((opt = getopt(argc, argv, "INhvr:cmsSn")) >= 0) {
     switch (opt) {
-      case 'c': {
-        ddsOptions |= ImageBuilder::COMPRESSION_BIT;
-        break;
-      }
-      case 'h': {
-        ddsOptions |= ImageBuilder::FLOP_BIT;
-        break;
-      }
-      case 'i': {
+      case 'I': {
         printInfo = true;
-        break;
-      }
-      case 'm': {
-        ddsOptions |= ImageBuilder::MIPMAPS_BIT;
-        break;
-      }
-      case 'n': {
-        ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
         break;
       }
       case 'N': {
         detectNormals = true;
         break;
       }
+      case 'h': {
+        ddsOptions |= ImageBuilder::FLOP_BIT;
+        break;
+      }
+      case 'v': {
+        ddsOptions |= ImageBuilder::FLIP_BIT;
+        break;
+      }
       case 'r': {
-        ddsOptions |= ImageBuilder::READABLE_BIT;
+        stringstream ss(optarg);
+        ss >> scale;
+        scale = ss.fail() ? 1.0 : scale;
+        break;
+      }
+      case 'c': {
+        ddsOptions |= ImageBuilder::COMPRESSION_BIT;
+        break;
+      }
+      case 'm': {
+        ddsOptions |= ImageBuilder::MIPMAPS_BIT;
         break;
       }
       case 's': {
@@ -92,8 +98,8 @@ int main(int argc, char** argv)
         ddsOptions |= ImageBuilder::ZYZX_BIT;
         break;
       }
-      case 'v': {
-        ddsOptions |= ImageBuilder::FLIP_BIT;
+      case 'n': {
+        ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
         break;
       }
       default: {
@@ -124,6 +130,16 @@ int main(int argc, char** argv)
   if (image.isEmpty()) {
     printf("Failed to open image '%s'.\n", argv[optind]);
     return EXIT_FAILURE;
+  }
+
+  if (detectNormals) {
+    if (image.isNormalMap()) {
+      printf("Normal map detected.\n");
+      return EXIT_SUCCESS;
+    }
+    else {
+      return EXIT_FAILURE;
+    }
   }
 
   if (image.flags & ImageData::NORMAL_BIT) {
@@ -157,7 +173,7 @@ int main(int argc, char** argv)
     }
   }
 
-  if (!ImageBuilder::createDDS(&image, 1, ddsOptions, destFile.c_str())) {
+  if (!ImageBuilder::createDDS(&image, 1, ddsOptions, scale, destFile.c_str())) {
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

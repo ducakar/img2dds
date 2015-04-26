@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -msse3 -mfpmath=sse")
 find_library(FREEIMAGE_LIBRARY NAMES freeimage FreeImage)
 find_library(SQUISH_LIBRARY NAMES squish)
 
+add_definitions(-DFREEIMAGE_LIB)
 add_executable(img2dds main.cc ImageBuilder.hh ImageBuilder.cc)
 target_link_libraries(img2dds ${FREEIMAGE_LIBRARY} ${SQUISH_LIBRARY})
 

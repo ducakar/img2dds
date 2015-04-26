@@ -60,7 +60,6 @@ static const unsigned DDPF_ALPHAPIXELS                   = 0x00000001;
 static const unsigned DDPF_FOURCC                        = 0x00000004;
 static const unsigned DDPF_RGB                           = 0x00000040;
 static const unsigned DDPF_NORMAL                        = 0x80000000;
-static const unsigned DDPF_READABLE                      = 0x08000000;
 
 static const unsigned DXGI_FORMAT_R8G8B8A8_UNORM         = 28;
 static const unsigned DXGI_FORMAT_BC1_UNORM              = 71;
@@ -163,24 +162,24 @@ static FIBITMAP* loadBitmap(const char* file)
   return dib;
 }
 
-static bool buildDDS(const ImageData* faces, int nFaces, int options, const char* destFile)
+static bool buildDDS(const ImageData* faces, int nFaces, int options,double scale,
+                     const char* destFile)
 {
   assert(nFaces > 0);
 
-  int width       = faces[0].width;
-  int height      = faces[0].height;
+  int width      = faces[0].width;
+  int height     = faces[0].height;
 
-  bool isCubeMap  = options & ImageBuilder::CUBE_MAP_BIT;
-  bool isNormal   = options & ImageBuilder::NORMAL_MAP_BIT;
-  bool doMipmaps  = options & ImageBuilder::MIPMAPS_BIT;
-  bool compress   = options & ImageBuilder::COMPRESSION_BIT;
-  bool doFlip     = options & ImageBuilder::FLIP_BIT;
-  bool doFlop     = options & ImageBuilder::FLOP_BIT;
-  bool doYYYX     = options & ImageBuilder::YYYX_BIT;
-  bool doZYZX     = options & ImageBuilder::ZYZX_BIT;
-  bool isReadable = options & ImageBuilder::READABLE_BIT;
-  bool hasAlpha   = (faces[0].flags & ImageData::ALPHA_BIT) || doYYYX || doZYZX;
-  bool isArray    = !isCubeMap && nFaces > 1;
+  bool isCubeMap = options & ImageBuilder::CUBE_MAP_BIT;
+  bool isNormal  = options & ImageBuilder::NORMAL_MAP_BIT;
+  bool doMipmaps = options & ImageBuilder::MIPMAPS_BIT;
+  bool compress  = options & ImageBuilder::COMPRESSION_BIT;
+  bool doFlip    = options & ImageBuilder::FLIP_BIT;
+  bool doFlop    = options & ImageBuilder::FLOP_BIT;
+  bool doYYYX    = options & ImageBuilder::YYYX_BIT;
+  bool doZYZX    = options & ImageBuilder::ZYZX_BIT;
+  bool hasAlpha  = (faces[0].flags & ImageData::ALPHA_BIT) || doYYYX || doZYZX;
+  bool isArray   = !isCubeMap && nFaces > 1;
 
   for (int i = 1; i < nFaces; ++i) {
     if (faces[i].width != width || faces[i].height != height) {
@@ -194,9 +193,11 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
     return false;
   }
 
+  int targetWidth    = max(int(lround(width * scale)), 1);
+  int targetHeight   = max(int(lround(height * scale)), 1);
   int targetBPP      = hasAlpha || compress || isArray ? 32 : 24;
-  int pitchOrLinSize = ((width * targetBPP / 8 + 3) / 4) * 4;
-  int nMipmaps       = doMipmaps ? index1(max(width, height)) + 1 : 1;
+  int pitchOrLinSize = ((targetWidth * targetBPP / 8 + 3) / 4) * 4;
+  int nMipmaps       = doMipmaps ? index1(max(targetWidth, targetHeight)) + 1 : 1;
 
   int flags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
   flags |= doMipmaps ? DDSD_MIPMAPCOUNT : 0;
@@ -214,7 +215,6 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
   int pixelFlags = 0;
   pixelFlags |= hasAlpha ? DDPF_ALPHAPIXELS : 0;
   pixelFlags |= compress ? DDPF_FOURCC : DDPF_RGB;
-  pixelFlags |= isReadable ? DDPF_READABLE : 0;
   pixelFlags |= isNormal ? DDPF_NORMAL : 0;
 
   const char* fourCC = isArray ? "DX10" : "\0\0\0\0";
@@ -224,7 +224,7 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
   squishFlags    |= hasAlpha ? squish::kDxt5 : squish::kDxt1;
 
   if (compress) {
-    pitchOrLinSize = squish::GetStorageRequirements(width, height, squishFlags);
+    pitchOrLinSize = squish::GetStorageRequirements(targetWidth, targetHeight, squishFlags);
     dx10Format     = hasAlpha ? DXGI_FORMAT_BC3_UNORM : DXGI_FORMAT_BC1_UNORM;
     fourCC         = isArray ? "DX10" : hasAlpha ? "DXT5" : "DXT1";
   }
@@ -240,8 +240,8 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
   writeChars("DDS ", 4, f);
   writeInt(124, f);
   writeInt(flags, f);
-  writeInt(height, f);
-  writeInt(width, f);
+  writeInt(targetHeight, f);
+  writeInt(targetWidth, f);
   writeInt(pitchOrLinSize, f);
   writeInt(0, f);
   writeInt(nMipmaps, f);
@@ -341,12 +341,13 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
       face = FreeImage_ConvertTo24Bits(face);
     }
 
-    int levelWidth  = width;
-    int levelHeight = height;
+    int levelWidth  = targetWidth;
+    int levelHeight = targetHeight;
 
     for (int j = 0; j < nMipmaps; ++j) {
       FIBITMAP* level = face;
-      if (j != 0) {
+
+      if (levelWidth != width || levelHeight != height) {
         level = FreeImage_Rescale(face, levelWidth, levelHeight, FILTER_CATMULLROM);
       }
 
@@ -371,7 +372,7 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
       levelWidth  = max(1, levelWidth / 2);
       levelHeight = max(1, levelHeight / 2);
 
-      if (j != 0) {
+      if (level != face) {
         FreeImage_Unload(level);
       }
     }
@@ -381,14 +382,13 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options, const char
 
   fclose(f);
 
-  printf("%s\n%s  %4dx%-4d  %2d mipmaps%s%s\n",
+  printf("%s\n%s  %4dx%-4d  %2d mipmaps%s\n",
          destFile,
          compress ? fourCC : targetBPP == 32 ? "RGBA" : "RGB ",
-         width,
-         height,
+         targetWidth,
+         targetHeight,
          nMipmaps,
-         isNormal ? "  NORMAL_MAP" : "",
-         isReadable ? "  READABLE" : "");
+         isNormal ? "  NORMAL_MAP" : "");
 
   return true;
 }
@@ -596,26 +596,26 @@ bool ImageBuilder::printInfo(const char* file)
   readInt(f);
   readInt(f);
 
-  printf("%s\n%s  %4dx%-4d  %2d mipmaps%s%s\n",
+  printf("%s\n%s  %4dx%-4d  %2d mipmaps%s\n",
          file,
          unsigned(pixelFlags) & DDPF_FOURCC ? formatFourCC : bpp == 32 ? "RGBA" : "RGB ",
          width,
          height,
          nMipmaps,
-         unsigned(pixelFlags) & DDPF_NORMAL ? "  NORMAL_MAP" : "",
-         unsigned(pixelFlags) & DDPF_READABLE ? "  READABLE" : "");
+         unsigned(pixelFlags) & DDPF_NORMAL ? "  NORMAL_MAP" : "");
 
   return true;
 }
 
-bool ImageBuilder::createDDS(const ImageData* faces, int nFaces, int options, const char* destFile)
+bool ImageBuilder::createDDS(const ImageData* faces, int nFaces, int options, double scale,
+                             const char* destFile)
 {
   if (nFaces < 1) {
     printf("At least one face must be given.\n");
     return false;
   }
 
-  return buildDDS(faces, nFaces, options, destFile);
+  return buildDDS(faces, nFaces, options, scale, destFile);
 }
 
 void ImageBuilder::init()
