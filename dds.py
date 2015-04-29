@@ -14,6 +14,7 @@
 
 # Excluded texture patterns. These textures will be left intact.
 EXCLUDE = [
+  'BoulderCo/',
   'CommunityResourcePack/',
   'CustomBiomes/PluginData/CustomBiomes/',
   'KittopiaSpace/',
@@ -27,7 +28,8 @@ EXCLUDE = [
   'SCANsat/Icons/',
   'Squad/Contracts/Icons/',
   'TextureReplacer/EnvMap/',
-  'TriggerTech/.*/(Textures|ToolbarIcons)/'
+  'TriggerTech/.*/(Textures|ToolbarIcons)/',
+  'WarpPlugin/PlanetResourceData/'
 ]
 
 # Model texture patterns (mipmaps are generated, checked for normal maps).
@@ -61,7 +63,6 @@ MODEL = [
   'RetroFuture/',
   'SnacksPartsByWhyren/',
   'Space Factory Ind/',
-  'Squad/SPP/',
   'TantaresLV/',
   'TextureReplacer/',
   'UmbraSpaceIndustries/',
@@ -92,7 +93,7 @@ MODEL_SCALE = 1.0
 MODEL_NORMALS_SCALE = 1.0
 
 # Uncomment to shrink normal maps to ~ 1/2 size; i.e. 1024 -> 720, 512 -> 360, 256 -> 180 etc.
-MODEL_NORMALS_SCALE = 0.703125
+#MODEL_NORMALS_SCALE = 0.703125
 
 ####################################################################################################
 
