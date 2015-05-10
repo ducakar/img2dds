@@ -115,6 +115,8 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
+  ImageBuilder::init();
+
   if (printInfo) {
     if (ImageBuilder::printInfo(argv[optind])) {
       return EXIT_SUCCESS;
