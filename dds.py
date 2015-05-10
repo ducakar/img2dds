@@ -15,20 +15,30 @@
 # Excluded texture patterns. These textures will be left intact.
 EXCLUDE = [
   'BoulderCo/',
+  'CapCom/Textures/CapComToolbarIcon',
   'CommunityResourcePack/',
+  'ContractRewardModifier/Textures/ContractModifierToolbarIcon',
+  'ContractsWindow/Textures/ContractsIcon',
   'CustomBiomes/PluginData/CustomBiomes/',
+  'Diazo/AGExt/',
   'KittopiaSpace/',
   'Kopernicus',
   'OPM/',
+  'MagicSmokeIndustries/Textures/',
   'NavyFish/Plugins/PluginData/',
   'NearFuture.*/(Icons|PluginData)/',
-  'RCSBuildAid/Textures/iconAppLauncher\.png$',
+  'Olympic1ARPIcons/',
+  'RCSBuildAid/Textures/iconAppLauncher',
   'RealChute/Plugins/PluginData/',
   'RealSolarSystem/Plugins/PluginData/',
   'SCANsat/Icons/',
+  'scatterer',
   'Squad/Contracts/Icons/',
   'TextureReplacer/EnvMap/',
-  'TriggerTech/.*/(Textures|ToolbarIcons)/',
+  'TriggerTech/.*/(Icons|Textures|ToolbarIcons)/',
+  'UmbraSpaceIndustries/Kolonization/OrbitalLogistics',
+  'UmbraSpaceIndustries/Kolonization/StationManager',
+  'UmbraSpaceIndustries/LifeSupport/Supplies',
   'WarpPlugin/PlanetResourceData/'
 ]
 
