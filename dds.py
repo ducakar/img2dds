@@ -32,7 +32,7 @@ EXCLUDE = [
   'RealChute/Plugins/PluginData/',
   'RealSolarSystem/Plugins/PluginData/',
   'SCANsat/Icons/',
-  'scatterer',
+  'scatterer/',
   'Squad/Contracts/Icons/',
   'TextureReplacer/EnvMap/',
   'TriggerTech/.*/(Icons|Textures|ToolbarIcons)/',

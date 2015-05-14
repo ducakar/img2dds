@@ -13,7 +13,6 @@ target_link_libraries(img2dds ${FREEIMAGE_LIBRARY} ${SQUISH_LIBRARY})
 
 if(WIN32)
   add_definitions(-DFREEIMAGE_LIB)
-  target_link_libraries(img2dds -lwsock32)
 endif()
 
 add_custom_target(imgs2dds SOURCES dds.py)

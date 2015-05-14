@@ -491,9 +491,9 @@ bool ImageData::isNormalMap() const
 ImageData ImageBuilder::loadImage(const char* file)
 {
   ImageData image;
+  size_t    pathLen = strlen(file);
 
-  FIBITMAP* dib = loadBitmap(file);
-  if (dib == nullptr) {
+  if (strcmp(file + pathLen - 3, "mbm") == 0) {
     FILE* f = fopen(file, "rb");
     if (f == nullptr || readInt(f) != 0x50534B03) {
       return image;
@@ -528,6 +528,11 @@ ImageData ImageBuilder::loadImage(const char* file)
     fclose(f);
   }
   else {
+    FIBITMAP* dib = loadBitmap(file);
+    if (dib == nullptr) {
+      return image;
+    }
+
     image = ImageData(int(FreeImage_GetWidth(dib)), int(FreeImage_GetHeight(dib)));
 
     // Copy and convert BGRA -> RGBA.
