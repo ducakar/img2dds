@@ -76,14 +76,16 @@ MODEL = [
   'TantaresLV/',
   'TextureReplacer/',
   'UmbraSpaceIndustries/',
+  'VenStockRevamp/Squad/SPP/',
   'WildBlueIndustries/MCM/MultiModule/'
 ]
 
 # Some non-model textures may match the previous model patterns. Exclude them from models.
 NOT_MODEL = [
-  '.*/Agencies/.*',
-  '.*/Flags/.*',
-  '.*/Icons/.*',
+  '.*/Agencies/',
+  '.*/Flags/',
+  '.*/Icons/',
+  '.*/Props/(Fonts|Screens)/',
   'ASET_Props/MFDs/',
   'AxialAerospace/Props/.*\.png$',
   'B9_Aerospace/Props/B9_MFD/images/',

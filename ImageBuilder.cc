@@ -393,10 +393,6 @@ static bool buildDDS(const ImageData* faces, int nFaces, int options,double scal
   return true;
 }
 
-ImageData::ImageData() :
-  width(0), height(0), flags(0), pixels(nullptr)
-{}
-
 ImageData::ImageData(int width_, int height_) :
   width(width_), height(height_), flags(0), pixels(new char[width* height * 4])
 {}
@@ -418,6 +414,8 @@ ImageData::ImageData(ImageData&& i) :
 ImageData& ImageData::operator = (ImageData&& i)
 {
   if (&i != this) {
+    delete[] pixels;
+
     width  = i.width;
     height = i.height;
     flags  = i.flags;

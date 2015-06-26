@@ -148,15 +148,6 @@ int main(int argc, char** argv)
     ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
     ddsOptions &= ~(ImageBuilder::YYYX_BIT | ImageBuilder::ZYZX_BIT);
   }
-  else if (detectNormals) {
-    if (image.isNormalMap()) {
-      ddsOptions |= ImageBuilder::NORMAL_MAP_BIT;
-    }
-    else {
-      ddsOptions &= ~ImageBuilder::NORMAL_MAP_BIT;
-      ddsOptions &= ~(ImageBuilder::YYYX_BIT | ImageBuilder::ZYZX_BIT);
-    }
-  }
 
   string destFile;
 

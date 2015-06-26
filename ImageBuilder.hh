@@ -39,15 +39,15 @@ struct ImageData
   /// Normal map bit.
   static const int NORMAL_BIT = 0x02;
 
-  int   width;  ///< Width.
-  int   height; ///< Height.
-  int   flags;  ///< Flags.
-  char* pixels; ///< Pixels data in RGBA format.
+  int   width  = 0;       ///< Width.
+  int   height = 0;       ///< Height.
+  int   flags  = 0;       ///< Flags.
+  char* pixels = nullptr; ///< Pixels data in RGBA format.
 
   /**
    * Create empty instance, no allocation is performed.
    */
-  ImageData();
+  ImageData() = default;
 
   /**
    * Create an image an allocate memory for pixel data.
